@@ -1,0 +1,14 @@
+FROM --platform=linux/amd64 python:3.10-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      libmupdf-dev build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY app/ app/
+COPY app/process_pdfs.py .
+
+RUN pip install --no-cache-dir PyMuPDF==1.24.* numpy scikit-learn
+
+CMD ["python", "process_pdfs.py"]
