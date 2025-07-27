@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.log
+
+# Virtual environments
+.venv/
+venv/
+
+# Large files & misc
+*.safetensors
+*.pt
+*.pdf
+*.json
+outputs/
