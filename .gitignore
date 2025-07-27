@@ -5,8 +5,9 @@ __pycache__/
 *.log
 
 # Virtual environments
-.venv/
 venv/
+.venv/
+1B/venv/
 
 # Large files & misc
 *.safetensors
