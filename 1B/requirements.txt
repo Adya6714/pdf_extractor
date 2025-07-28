@@ -1,10 +1,2 @@
-numpy
-scikit-learn
-sentence-transformers
-faiss-cpu
-pdfplumber
-PyPDF2
-networkx
-nltk
-torch
-tqdm
+reportlab
+llama-cpp-python

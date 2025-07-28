@@ -1,4 +1,4 @@
-# models/document_models.py
+# src/models/document_models.py
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 from datetime import datetime
@@ -52,3 +52,4 @@ class ProcessingResult:
     subsection_analysis: List[Dict]
     processing_time: float
     insights: List[str] = field(default_factory=list)
+    llm_response: str = ""

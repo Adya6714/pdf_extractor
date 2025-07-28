@@ -1,8 +1,8 @@
-# processors/persona_analyzer.py
+# src/processors/persona_analyzer.py
 import nltk
 from nltk.corpus import wordnet
 from typing import List, Dict, Set
-from models.document_models import PersonaProfile
+from src.models.document_models import PersonaProfile
 import re
 
 class PersonaAnalyzer:
@@ -10,8 +10,13 @@ class PersonaAnalyzer:
     
     def __init__(self):
         # Download required NLTK data
-        nltk.download('wordnet', quiet=True)
-        nltk.download('averaged_perceptron_tagger', quiet=True)
+        try:
+            nltk.download('wordnet', quiet=True)
+            nltk.download('averaged_perceptron_tagger', quiet=True)
+            nltk.download('punkt', quiet=True)
+            nltk.download('stopwords', quiet=True)
+        except:
+            pass
         
         # Persona templates
         self.persona_templates = {
@@ -85,9 +90,11 @@ class PersonaAnalyzer:
         
         # Extract nouns and important verbs
         keywords = []
+        stopwords = set(nltk.corpus.stopwords.words('english'))
+        
         for word, pos in pos_tags:
             if pos in ['NN', 'NNS', 'NNP', 'NNPS', 'VB', 'VBG']:  # Nouns and verbs
-                if len(word) > 3 and word not in nltk.corpus.stopwords.words('english'):
+                if len(word) > 3 and word not in stopwords:
                     keywords.append(word)
         
         # Extract phrases (bigrams/trigrams)

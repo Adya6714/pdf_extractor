@@ -1,9 +1,9 @@
-# processors/pdf_processor.py
+# src/processors/pdf_processor.py
 import re
 import pdfplumber
 import PyPDF2
 from typing import List, Tuple, Dict
-from models.document_models import DocumentChunk
+from src.models.document_models import DocumentChunk
 import logging
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ class PDFProcessor:
         }
         
         # Extract characters with formatting
-        chars = page.chars
+        chars = page.chars if hasattr(page, 'chars') else []
         current_line = []
         current_y = None
         
@@ -92,6 +92,25 @@ class PDFProcessor:
         else:
             layout['paragraphs'].append(text)
     
+    def _fallback_extraction(self, pdf_path: str) -> List[Dict]:
+        """Fallback extraction using PyPDF2"""
+        pages = []
+        try:
+            with open(pdf_path, 'rb') as file:
+                reader = PyPDF2.PdfReader(file)
+                for page_num in range(len(reader.pages)):
+                    page = reader.pages[page_num]
+                    text = page.extract_text()
+                    pages.append({
+                        'page_number': page_num + 1,
+                        'text': text,
+                        'tables': [],
+                        'layout': {'headers': [], 'paragraphs': [], 'lists': []}
+                    })
+        except Exception as e:
+            logger.error(f"Fallback extraction failed: {e}")
+        return pages
+    
     def create_semantic_chunks(self, pages: List[Dict], doc_name: str) -> List[DocumentChunk]:
         """Create semantically coherent chunks from pages"""
         all_chunks = []
@@ -107,126 +126,132 @@ class PDFProcessor:
         
         return all_chunks
     
+    def _detect_header(self, line: str, layout: Dict) -> Tuple[bool, int, str]:
+        """Detect if line is a header and return level"""
+        
+        # Skip very short lines or numbers
+        if len(line.strip()) < 3 or line.strip().replace('.', '').isdigit():
+            return False, 3, ""
+        
+        # Skip lines that are just numbered steps
+        if re.match(r'^\d+\.\s+', line) and len(line) < 100:
+            # This might be a step, not a header
+            return False, 3, ""
+        
+        # Priority patterns for different document types
+        header_patterns = [
+            # Document type headers (highest priority)
+            (0, r'^([A-Z][A-Za-z\s\-&]+)$'),
+            (0, r'^([A-Z][A-Za-z\s\-&]+):?\s*$'),
+            
+            # Food/Recipe headers
+            (1, r'^([A-Z][a-z]+(?:\s+[A-Z]?[a-z]+)*)\s*$'),
+            (1, r'^([A-Za-z\s]+):\s*$'),
+            
+            # Section headers
+            (1, r'^(?:Chapter|Section|Part)\s+\d+[:\s]+(.+)$'),
+            (1, r'^(\d+\.\d+\s+.+)$'),
+            
+            # Functional headers
+            (2, r'^(Introduction|Overview|Summary|Conclusion|Instructions|Ingredients|Tips?).*$'),
+            (2, r'^(Must-[A-Za-z\s]+|How to[A-Za-z\s]+|Guide to[A-Za-z\s]+).*$'),
+        ]
+        
+        # Check against layout info first
+        if line in layout.get('headers', []):
+            return True, 1, line
+        
+        # Check font-based detection
+        for char_info in layout.get('chars', []):
+            if char_info.get('text', '') in line:
+                if 'bold' in char_info.get('fontname', '').lower() or char_info.get('size', 0) > 12:
+                    return True, 1, line
+        
+        # Check patterns
+        for level, pattern in header_patterns:
+            match = re.match(pattern, line.strip(), re.IGNORECASE)
+            if match:
+                header_text = match.group(1) if match.groups() else line.strip()
+                return True, level, header_text
+        
+        return False, 3, ""
+    
     def _smart_chunk_page(self, text: str, layout: Dict, page_num: int, doc_name: str) -> List[DocumentChunk]:
         """Create chunks respecting document structure"""
         chunks = []
-        lines = text.split('\n')
+        lines = text.split('\n') if text else []
         
-        current_section = "General"
+        # Determine page-level header
+        page_header = None
+        for line in lines[:10]:
+            line_stripped = line.strip()
+            if line_stripped and len(line_stripped) > 3:
+                is_h, lvl, hdr = self._detect_header(line_stripped, layout)
+                if is_h and lvl <= 1:
+                    page_header = hdr
+                    break
+        if not page_header:
+            lower_name = doc_name.lower()
+            if any(tag in lower_name for tag in ("recipe", "dinner")):
+                for line in lines[:20]:
+                    clean = line.strip()
+                    if clean and not any(skip in clean.lower() for skip in ("ingredients","instructions","serves")):
+                        if re.match(r'^[A-Z][a-z]+(?:\s+[A-Z]?[a-z]+)*$', clean):
+                            page_header = clean
+                            break
+        
+        current_section = page_header or "Content"
         current_chunk = []
         current_level = 3
         chunk_start = 0
         
         for i, line in enumerate(lines):
             line_stripped = line.strip()
-            
-            # Check if this is a header
-            is_header, level, header_text = self._detect_header(line_stripped, layout)
-            
-            if is_header:
-                # Save current chunk if exists
+            is_h, lvl, hdr = self._detect_header(line_stripped, layout)
+            if is_h and hdr and hdr != current_section:
                 if current_chunk:
-                    chunk_text = '\n'.join(current_chunk)
-                    if len(chunk_text.strip()) > self.config.MIN_CHUNK_SIZE:
+                    text_chunk = '\n'.join(current_chunk)
+                    if len(text_chunk.strip()) > self.config.MIN_CHUNK_SIZE:
                         chunks.append(DocumentChunk(
                             document_name=doc_name,
                             page_number=page_num,
-                            text=chunk_text,
+                            text=text_chunk,
                             section_title=current_section,
                             structural_level=current_level,
                             start_char=chunk_start,
-                            end_char=chunk_start + len(chunk_text)
+                            end_char=chunk_start + len(text_chunk)
                         ))
-                
-                # Start new section
-                current_section = header_text
-                current_level = level
-                current_chunk = []
+                current_section = hdr
+                current_level = lvl
+                current_chunk = [line]
                 chunk_start = sum(len(l) + 1 for l in lines[:i])
-            
-            elif line_stripped:  # Non-empty line
+            elif line_stripped:
                 current_chunk.append(line)
-                
-                # Check if chunk is getting too large
-                chunk_text = '\n'.join(current_chunk)
-                if len(chunk_text) > self.config.MAX_CHUNK_SIZE:
-                    # Find good breaking point
-                    break_point = self._find_break_point(chunk_text)
-                    
-                    # Save chunk up to break point
-                    chunk_to_save = chunk_text[:break_point]
+                text_chunk = '\n'.join(current_chunk)
+                if len(text_chunk) > self.config.MAX_CHUNK_SIZE:
                     chunks.append(DocumentChunk(
                         document_name=doc_name,
                         page_number=page_num,
-                        text=chunk_to_save,
+                        text=text_chunk,
                         section_title=current_section,
                         structural_level=current_level,
                         start_char=chunk_start,
-                        end_char=chunk_start + len(chunk_to_save)
+                        end_char=chunk_start + len(text_chunk)
                     ))
-                    
-                    # Keep remainder for next chunk
-                    remainder = chunk_text[break_point:].strip()
-                    current_chunk = [remainder] if remainder else []
-                    chunk_start += len(chunk_to_save)
+                    current_chunk = []
+                    chunk_start += len(text_chunk)
         
-        # Don't forget last chunk
         if current_chunk:
-            chunk_text = '\n'.join(current_chunk)
-            if len(chunk_text.strip()) > self.config.MIN_CHUNK_SIZE:
+            text_chunk = '\n'.join(current_chunk)
+            if len(text_chunk.strip()) > self.config.MIN_CHUNK_SIZE:
                 chunks.append(DocumentChunk(
                     document_name=doc_name,
                     page_number=page_num,
-                    text=chunk_text,
+                    text=text_chunk,
                     section_title=current_section,
                     structural_level=current_level,
                     start_char=chunk_start,
-                    end_char=chunk_start + len(chunk_text)
+                    end_char=chunk_start + len(text_chunk)
                 ))
         
         return chunks
-    
-    def _detect_header(self, line: str, layout: Dict) -> Tuple[bool, int, str]:
-        """Detect if line is a header and return level"""
-        # Check against layout info first
-        if line in layout.get('headers', []):
-            return True, 1, line
-        
-        # Check patterns
-        for level, pattern in self.header_patterns:
-            match = re.match(pattern, line)
-            if match:
-                header_text = match.group(1) if match.groups() else line
-                return True, level, header_text
-        
-        return False, 3, ""
-    
-    def _find_break_point(self, text: str) -> int:
-        """Find natural breaking point in text"""
-        # Try to break at sentence boundary
-        sentences = re.split(r'[.!?]+', text)
-        if len(sentences) > 1:
-            # Find break point around middle
-            mid_point = len(text) // 2
-            best_break = mid_point
-            min_distance = float('inf')
-            
-            current_pos = 0
-            for sent in sentences[:-1]:
-                current_pos += len(sent) + 1
-                distance = abs(current_pos - mid_point)
-                if distance < min_distance:
-                    min_distance = distance
-                    best_break = current_pos
-            
-            return best_break
-        
-        # Fallback to paragraph break
-        paragraphs = text.split('\n\n')
-        if len(paragraphs) > 1:
-            return len(paragraphs[0]) + 2
-        
-        # Last resort: break at space near middle
-        mid_point = len(text) // 2
-        space_pos = text.find(' ', mid_point)
-        return space_pos if space_pos != -1 else mid_point

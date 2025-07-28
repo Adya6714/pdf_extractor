@@ -1,43 +1,38 @@
-# Dockerfile
 FROM python:3.9-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    poppler-utils \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements
+# Copy requirements first for better caching
 COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download models and data
-RUN python -c "from sentence_transformers import SentenceTransformer; \
-    model = SentenceTransformer('all-MiniLM-L6-v2'); \
-    print('Model downloaded successfully')"
+# Download NLTK data
+RUN python -c "import nltk; nltk.download('punkt'); nltk.download('wordnet'); nltk.download('stopwords'); nltk.download('averaged_perceptron_tagger')"
 
-RUN python -c "import nltk; \
-    nltk.download('punkt'); \
-    nltk.download('stopwords'); \
-    nltk.download('wordnet'); \
-    nltk.download('averaged_perceptron_tagger')"
+# Create directories
+RUN mkdir -p models outputs cache logs temp
 
-# Copy application code
-COPY . .
+# Copy source code
+COPY src/ ./src/
+COPY main.py .
+COPY setup.py .
 
-# Create necessary directories
-RUN mkdir -p PDFs outputs
+# Download the model during build
+RUN python -c "from setup import download_llm_model; download_llm_model()"
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV OMP_NUM_THREADS=4
-ENV TOKENIZERS_PARALLELISM=false
 
-# Run the application
-CMD ["python", "main.py"]
+# Default command
+CMD ["python", "main.py", "--mode", "batch"]

@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  pdf-processor:
+    build: .
+    volumes:
+      - ./collections:/app/collections
+      - ./outputs:/app/outputs
+      - ./models:/app/models
+      - ./cache:/app/cache
+      - ./logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python main.py --mode batch --parallel

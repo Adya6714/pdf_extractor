@@ -1,4 +1,4 @@
-# processors/embedding_processor.py
+# src/processors/embedding_processor.py
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import faiss
