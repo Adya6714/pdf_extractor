@@ -1,0 +1,4 @@
+# Large model files
+*.gguf
+models/
+1B/models/
