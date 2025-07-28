@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class PersonaDocumentIntelligence:
     def __init__(self):
         self.config              = Config()
-        self.pdf_processor       = PDFProcessor()
+        self.pdf_processor       = PDFProcessor(self.config)
         self.persona_analyzer    = PersonaAnalyzer()
         self.embedding_processor = EmbeddingProcessor(self.config.EMBEDDING_MODEL)
         self.relevance_scorer    = RelevanceScorer(self.config)

@@ -5,14 +5,13 @@ import PyPDF2
 from typing import List, Tuple, Dict
 from models.document_models import DocumentChunk
 import logging
-import config
 
 logger = logging.getLogger(__name__)
 
 class PDFProcessor:
     """Advanced PDF processing with structure detection"""
-    
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.header_patterns = [
             (0, r'^#{1,3}\s+(.+)$'),  # Markdown headers
             (1, r'^(\d+\.?\s+[A-Z].+)$'),  # Numbered sections
@@ -128,7 +127,7 @@ class PDFProcessor:
                 # Save current chunk if exists
                 if current_chunk:
                     chunk_text = '\n'.join(current_chunk)
-                    if len(chunk_text.strip()) > config.MIN_CHUNK_SIZE:
+                    if len(chunk_text.strip()) > self.config.MIN_CHUNK_SIZE:
                         chunks.append(DocumentChunk(
                             document_name=doc_name,
                             page_number=page_num,
@@ -150,7 +149,7 @@ class PDFProcessor:
                 
                 # Check if chunk is getting too large
                 chunk_text = '\n'.join(current_chunk)
-                if len(chunk_text) > config.MAX_CHUNK_SIZE:
+                if len(chunk_text) > self.config.MAX_CHUNK_SIZE:
                     # Find good breaking point
                     break_point = self._find_break_point(chunk_text)
                     
@@ -174,7 +173,7 @@ class PDFProcessor:
         # Don't forget last chunk
         if current_chunk:
             chunk_text = '\n'.join(current_chunk)
-            if len(chunk_text.strip()) > config.MIN_CHUNK_SIZE:
+            if len(chunk_text.strip()) > self.config.MIN_CHUNK_SIZE:
                 chunks.append(DocumentChunk(
                     document_name=doc_name,
                     page_number=page_num,

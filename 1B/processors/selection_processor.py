@@ -169,7 +169,7 @@ class SelectionProcessor:
                 "section_title": chunk.section_title,
                 "importance_rank": rank + 1,
                 "page_number": chunk.page_number,
-                "relevance_score": round(score, 3)
+                "relevance_score": float(score)  # Ensure Python float
             })
         
         # Create subsection analysis
