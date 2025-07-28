@@ -15,3 +15,4 @@ venv/
 *.pdf
 *.json
 outputs/
+1B/models/

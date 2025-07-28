@@ -1,14 +1,17 @@
-version: '3.8'
-
+version: "3.8"
 services:
-  pdf-processor:
+  pdf-pipeline:
     build: .
+    image: pdf-pipeline:latest
+    container_name: pdf-pipeline
     volumes:
-      - ./collections:/app/collections
+      # Mount your Collections (read-only)
+      - ./Collections:/app/Collections:ro
+      # Persist outputs back to host
       - ./outputs:/app/outputs
-      - ./models:/app/models
-      - ./cache:/app/cache
-      - ./logs:/app/logs
+      # (Optional) If you skipped downloading model in Dockerfile, mount your local models:
+      # - ./models:/app/models:ro
     environment:
-      - PYTHONUNBUFFERED=1
-    command: python main.py --mode batch --parallel
+      # If you need to override defaults (e.g. collections path):
+      - COLLECTIONS_DIR=Collections
+    command: ["python3", "main.py", "--mode", "batch", "--collections-dir", "${COLLECTIONS_DIR}"]

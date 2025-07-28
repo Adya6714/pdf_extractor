@@ -1,38 +1,34 @@
+# Use slim Python base for smaller image
 FROM python:3.9-slim
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Prevent Python from writing .pyc files and buffering stdout/stderr
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Install system deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    cmake \
-    wget \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /app
 
-# Copy requirements first for better caching
+# Copy only requirements first (leverages layer caching)
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip setuptools wheel \
+ && pip install --no-cache-dir -r requirements.txt
 
-# Download NLTK data
-RUN python -c "import nltk; nltk.download('punkt'); nltk.download('wordnet'); nltk.download('stopwords'); nltk.download('averaged_perceptron_tagger')"
+# Copy rest of your code
+COPY . .
 
-# Create directories
-RUN mkdir -p models outputs cache logs temp
+# Download the TinyLlama model during build
+# (skip if you prefer to mount it at runtime)
+RUN mkdir -p models \
+ && curl -L -o models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf \
+      https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf \
+ && head -c 4 models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf | grep GGUF
 
-# Copy source code
-COPY src/ ./src/
-COPY main.py .
-COPY setup.py .
-
-# Download the model during build
-RUN python -c "from setup import download_llm_model; download_llm_model()"
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-
-# Default command
-CMD ["python", "main.py", "--mode", "batch"]
+# Default command: run batch on all Collections
+CMD ["python3", "main.py", "--mode", "batch", "--collections-dir", "Collections"]
