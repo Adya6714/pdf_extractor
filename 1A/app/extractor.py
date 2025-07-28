@@ -20,6 +20,17 @@ class PDFOutlineExtractor:
                 3: ['sub-topic', 'point']
             }
         }
+    def is_form_field_number(self, text):
+        """Detect if numbered text is a form field rather than a heading"""
+        form_indicators = [
+            'required', 'advance', 'amount', 'name of', 'designation', 
+            'date of', 'whether', 'pay', 'si', 'npa', 'signature',
+            'employee', 'officer', 'family', 'members', 'details'
+        ]
+        
+        text_lower = text.lower()
+        return any(indicator in text_lower for indicator in form_indicators)
+
 
     def extract_text_with_formatting(self, page):
         blocks = []
@@ -55,7 +66,7 @@ class PDFOutlineExtractor:
                                 "max_size": max_size,
                                 "is_bold": is_bold
                             },
-                            "page": page.number + 1
+                            "page": page.number 
                         })
         return blocks
 
@@ -111,11 +122,39 @@ class PDFOutlineExtractor:
                 return True
         
         return False
-
-
+    
+    def analyze_first_page_fonts(self, blocks):
+        """Analyze font hierarchy on first page to identify title vs metadata"""
+        first_page_blocks = [b for b in blocks if b["page"] == 0]
+        
+        if not first_page_blocks:
+            return None
+        
+        # Get all font sizes on first page
+        font_sizes = [b["info"]["max_size"] for b in first_page_blocks]
+        largest_font = max(font_sizes)
+        
+        # Calculate thresholds
+        title_threshold = largest_font * 0.9  # Within 90% of largest
+        metadata_threshold = largest_font * 0.7  # Below 70% likely metadata
+        
+        return {
+            'largest_font': largest_font,
+            'title_threshold': title_threshold,
+            'metadata_threshold': metadata_threshold
+        }
     def is_potential_heading(self, block, font_analysis, next_blocks):
         text = block["text"].strip()
-        
+        if hasattr(self, 'first_page_analysis') and block["page"] == 0:
+            font_size = block["info"]["max_size"]
+            
+            # If font is too small compared to title, likely metadata
+            if font_size < self.first_page_analysis['metadata_threshold']:
+                return False, 0
+            
+            # Check for metadata patterns
+            if self.is_first_page_metadata(block, self.total_pages):
+                return False, 0
         # Skip very long text
         if len(text) > 200:
             return False, 0
@@ -140,13 +179,19 @@ class PDFOutlineExtractor:
             if detected_level == 0:
                 detected_level = font_analysis['heading_candidates'][max_font_size]['level']
         
-        # Numbered patterns
+        # Numbered patterns - but check for form fields first
+        # Numbered patterns - but check for form fields first
         for pattern, level in self.heading_patterns['numbered']:
             if re.match(pattern, text):
+                # Skip if this looks like a form field
+                if self.is_form_field_number(text):
+                    break  # Don't add score, just break
+                    
                 score += 3
                 detected_level = level
                 break
-        
+
+
         # Bold formatting
         if block["info"]["is_bold"]:
             score += 2
@@ -579,7 +624,7 @@ class PDFOutlineExtractor:
             i = j
         
         return merged_headings
-
+    
     def should_merge_headings_basic(self, current_text, next_text, current_page, next_page, 
                                 current_level, next_level, merged_parts):
         """Your existing basic merging logic"""
@@ -827,7 +872,7 @@ class PDFOutlineExtractor:
         
         return False
 
-
+    
     def process_pdf(self, pdf_path: Path) -> Dict:
         try:
             doc = fitz.open(pdf_path)
@@ -874,7 +919,7 @@ class PDFOutlineExtractor:
                 
                 # Skip if this heading matches the title
                 if self.is_title_duplicate(heading_text, title_normalized):
-                    print(f"Skipping title duplicate: {heading['text']}")
+                    #print(f"Skipping title duplicate: {heading['text']}")
                     continue
                     
                 outline.append({
@@ -887,7 +932,7 @@ class PDFOutlineExtractor:
             return {"title": title, "outline": outline}
             
         except Exception as e:
-            print(f"Error processing {pdf_path}: {str(e)}")
+           # print(f"Error processing {pdf_path}: {str(e)}")
             return {"title": "Error Processing Document", "outline": []}
 
 
