@@ -1,34 +1,43 @@
-# Use slim Python base for smaller image
-FROM python:3.9-slim
+# Multi-stage build to reduce final image size
+FROM --platform=linux/amd64 python:3.9-slim as builder
 
-# Prevent Python from writing .pyc files and buffering stdout/stderr
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-# Install system deps
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
     build-essential \
-    curl \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
-
-# Copy only requirements first (leverages layer caching)
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir --user -r requirements.txt
 
-# Install Python dependencies
-RUN pip install --upgrade pip setuptools wheel \
- && pip install --no-cache-dir -r requirements.txt
+# Download NLTK data
+RUN python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords'); nltk.download('averaged_perceptron_tagger')"
 
-# Copy rest of your code
-COPY . .
+# Final stage - minimal runtime image
+FROM --platform=linux/amd64 python:3.9-slim
 
-# Download the TinyLlama model during build
-# (skip if you prefer to mount it at runtime)
-RUN mkdir -p models \
- && curl -L -o models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf \
-      https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf \
- && head -c 4 models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf | grep GGUF
+# Copy Python packages from builder
+COPY --from=builder /root/.local /root/.local
 
-# Default command: run batch on all Collections
-CMD ["python3", "main.py", "--mode", "batch", "--collections-dir", "Collections"]
+# Create necessary directories
+RUN mkdir -p /app/Collections /app/outputs /app/logs /app/models
+
+# Copy the model file (baked into image for offline use)
+COPY models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf /app/models/
+
+# Copy source code
+COPY src/ /app/src/
+COPY *.py /app/
+
+# Copy collections (this bakes the data into the image)
+COPY Collections/ /app/Collections/
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+ENV PATH=/root/.local/bin:$PATH
+
+# Default command to run the pipeline
+CMD ["python", "main.py"] 
