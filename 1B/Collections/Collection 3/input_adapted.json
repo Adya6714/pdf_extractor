@@ -1,0 +1,14 @@
+{
+  "collection_name": "menu_planning",
+  "persona": "Food Contractor",
+  "job_to_be_done": "Prepare a vegetarian buffet-style dinner menu for a corporate gathering, including gluten-free items.",
+  "output_format": {
+    "include_json": true,
+    "include_pdf": true,
+    "pdf_title": "Dinner menu planning - Food Contractor"
+  },
+  "processing_config": {
+    "max_sections": 25,
+    "min_relevance_score": 0.5
+  }
+}

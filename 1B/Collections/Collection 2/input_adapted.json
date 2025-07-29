@@ -1,0 +1,14 @@
+{
+  "collection_name": "create_manageable_forms",
+  "persona": "HR professional",
+  "job_to_be_done": "Create and manage fillable forms for onboarding and compliance.",
+  "output_format": {
+    "include_json": true,
+    "include_pdf": true,
+    "pdf_title": "Creating manageable forms - HR professional"
+  },
+  "processing_config": {
+    "max_sections": 25,
+    "min_relevance_score": 0.5
+  }
+}

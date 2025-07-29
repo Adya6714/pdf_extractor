@@ -2,3 +2,4 @@
 *.gguf
 models/
 1B/models/
+1B/models/*.gguf

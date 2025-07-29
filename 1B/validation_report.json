@@ -1,0 +1,286 @@
+{
+  "Collection 1": {
+    "status": "success",
+    "overall_score": 53.87270021836181,
+    "structure_validation": {
+      "missing_keys": [],
+      "extra_keys": [],
+      "type_mismatches": {},
+      "structure_match_score": 100.0
+    },
+    "content_validation": {
+      "content_differences": {
+        "metadata.processing_timestamp": {
+          "generated": "2025-07-28T18:16:04.441251+00:00Z",
+          "expected": "2025-07-10T15:31:22.632389",
+          "similarity": 0.3728813559322034
+        },
+        "subsection_analysis[0].page_number": {
+          "generated": "1",
+          "expected": "2",
+          "similarity": 0.0
+        },
+        "extracted_sections[0].section_title": {
+          "generated": "take you through a variety of activities and must-see attractions to help you plan an",
+          "expected": "Comprehensive Guide to Major Cities in the South of France",
+          "similarity": 0.22377622377622378
+        },
+        "extracted_sections[0].document": {
+          "generated": "South of France - Things to Do.pdf",
+          "expected": "South of France - Cities.pdf",
+          "similarity": 0.7741935483870968
+        },
+        "subsection_analysis[0].refined_text": {
+          "generated": "take you through a variety of activities and must-see attractions to help you plan an; unforgettable...",
+          "expected": "The South of France is renowned for its beautiful coastline along the Mediterranean Sea. Here are so...",
+          "similarity": 0.01762114537444934
+        }
+      },
+      "similarity_scores": {
+        "metadata.processing_timestamp": 0.3728813559322034,
+        "extracted_sections": 0.7127495830915539,
+        "metadata": 0.8432203389830508,
+        "metadata.input_documents": 1.0,
+        "subsection_analysis": 0.4497298830656713,
+        "metadata.persona": 1.0,
+        "subsection_analysis[0].document": 1.0,
+        "extracted_sections[0].section_title": 0.22377622377622378,
+        "extracted_sections[0].document": 0.7741935483870968,
+        "metadata.job_to_be_done": 1.0,
+        "subsection_analysis[0].refined_text": 0.01762114537444934
+      },
+      "array_length_mismatches": {},
+      "overall_similarity": 61.61810065508541
+    },
+    "semantic_validation": {
+      "extracted_sections_validation": {
+        "count_match": true,
+        "generated_count": 5,
+        "expected_count": 5,
+        "document_coverage": {
+          "generated_documents": [
+            "South of France - Restaurants and Hotels.pdf",
+            "South of France - Tips and Tricks.pdf",
+            "South of France - Things to Do.pdf",
+            "South of France - Cuisine.pdf",
+            "South of France - Cities.pdf"
+          ],
+          "expected_documents": [
+            "South of France - Cuisine.pdf",
+            "South of France - Cities.pdf",
+            "South of France - Things to Do.pdf",
+            "South of France - Tips and Tricks.pdf"
+          ],
+          "missing_documents": [],
+          "extra_documents": [
+            "South of France - Restaurants and Hotels.pdf"
+          ],
+          "coverage_score": 100.0
+        },
+        "section_overlap": 0.0
+      },
+      "llm_response_validation": {
+        "found": false,
+        "message": "LLM response not found in expected locations"
+      },
+      "metadata_validation": {
+        "persona_match": true,
+        "task_match": true,
+        "document_count_match": true
+      },
+      "insights_validation": {}
+    },
+    "grade": "F - Poor"
+  },
+  "Collection 2": {
+    "status": "success",
+    "overall_score": 59.96209363002206,
+    "structure_validation": {
+      "missing_keys": [],
+      "extra_keys": [],
+      "type_mismatches": {},
+      "structure_match_score": 100.0
+    },
+    "content_validation": {
+      "content_differences": {
+        "metadata.processing_timestamp": {
+          "generated": "2025-07-28T18:14:54.504415+00:00Z",
+          "expected": "2025-07-10T15:34:33.350102",
+          "similarity": 0.6101694915254238
+        },
+        "extracted_sections[0].section_title": {
+          "generated": "Interactive form",
+          "expected": "Change flat forms to fillable (Acrobat Pro)",
+          "similarity": 0.23728813559322035
+        },
+        "subsection_analysis[0].refined_text": {
+          "generated": "Interactive form To create an interactive form, use the Prepare Forms tool. See Create a form from a...",
+          "expected": "To create an interactive form, use the Prepare Forms tool. See Create a form from an existing docume...",
+          "similarity": 0.8732394366197183
+        }
+      },
+      "similarity_scores": {
+        "metadata.processing_timestamp": 0.6101694915254238,
+        "extracted_sections": 0.6298306409144814,
+        "metadata": 0.902542372881356,
+        "metadata.input_documents": 1.0,
+        "subsection_analysis": 0.5344208203730803,
+        "metadata.persona": 1.0,
+        "subsection_analysis[0].document": 1.0,
+        "extracted_sections[0].section_title": 0.23728813559322035,
+        "extracted_sections[0].document": 1.0,
+        "metadata.job_to_be_done": 1.0,
+        "subsection_analysis[0].refined_text": 0.8732394366197183
+      },
+      "array_length_mismatches": {},
+      "overall_similarity": 79.88628089006617
+    },
+    "semantic_validation": {
+      "extracted_sections_validation": {
+        "count_match": true,
+        "generated_count": 5,
+        "expected_count": 5,
+        "document_coverage": {
+          "generated_documents": [
+            "Learn Acrobat - Create and Convert_1.pdf",
+            "Learn Acrobat - Request e-signatures_2.pdf",
+            "Learn Acrobat - Export_1.pdf",
+            "Learn Acrobat - Request e-signatures_1.pdf",
+            "Learn Acrobat - Fill and Sign.pdf"
+          ],
+          "expected_documents": [
+            "Learn Acrobat - Create and Convert_1.pdf",
+            "Learn Acrobat - Request e-signatures_1.pdf",
+            "Learn Acrobat - Fill and Sign.pdf"
+          ],
+          "missing_documents": [],
+          "extra_documents": [
+            "Learn Acrobat - Request e-signatures_2.pdf",
+            "Learn Acrobat - Export_1.pdf"
+          ],
+          "coverage_score": 100.0
+        },
+        "section_overlap": 0.0
+      },
+      "llm_response_validation": {
+        "found": false,
+        "message": "LLM response not found in expected locations"
+      },
+      "metadata_validation": {
+        "persona_match": true,
+        "task_match": true,
+        "document_count_match": true
+      },
+      "insights_validation": {}
+    },
+    "grade": "F - Poor"
+  },
+  "Collection 3": {
+    "status": "success",
+    "overall_score": 52.51122152720578,
+    "structure_validation": {
+      "missing_keys": [],
+      "extra_keys": [],
+      "type_mismatches": {},
+      "structure_match_score": 100.0
+    },
+    "content_validation": {
+      "content_differences": {
+        "extracted_sections[0].page_number": {
+          "generated": "13",
+          "expected": "7",
+          "similarity": 0.0
+        },
+        "metadata.processing_timestamp": {
+          "generated": "2025-07-28T18:15:44.678939+00:00Z",
+          "expected": "2025-07-10T15:40:14.642503",
+          "similarity": 0.576271186440678
+        },
+        "subsection_analysis[0].document": {
+          "generated": "Dinner Ideas - Mains_2.pdf",
+          "expected": "Dinner Ideas - Sides_2.pdf",
+          "similarity": 0.8846153846153846
+        },
+        "subsection_analysis[0].page_number": {
+          "generated": "13",
+          "expected": "7",
+          "similarity": 0.0
+        },
+        "extracted_sections[0].section_title": {
+          "generated": "Grilled Salmon",
+          "expected": "Falafel",
+          "similarity": 0.19047619047619047
+        },
+        "extracted_sections[0].document": {
+          "generated": "Dinner Ideas - Mains_2.pdf",
+          "expected": "Dinner Ideas - Sides_2.pdf",
+          "similarity": 0.8846153846153846
+        },
+        "subsection_analysis[0].refined_text": {
+          "generated": "\u2022 Cook sandwiches in the skillet until golden brown and cheese is melted. \u2022 Serve warm. Grilled Salm...",
+          "expected": "Escalivada Ingredients: 2 eggplants, 2 bell peppers, 2 tomatoes, 1 small onion, 1/4 cup olive oil, 1...",
+          "similarity": 0.026143790849673203
+        }
+      },
+      "similarity_scores": {
+        "metadata.processing_timestamp": 0.576271186440678,
+        "extracted_sections": 0.6009518720928376,
+        "metadata": 0.8940677966101696,
+        "metadata.input_documents": 1.0,
+        "subsection_analysis": 0.42223478990993557,
+        "metadata.persona": 1.0,
+        "subsection_analysis[0].document": 0.8846153846153846,
+        "extracted_sections[0].section_title": 0.19047619047619047,
+        "extracted_sections[0].document": 0.8846153846153846,
+        "metadata.job_to_be_done": 1.0,
+        "subsection_analysis[0].refined_text": 0.026143790849673203
+      },
+      "array_length_mismatches": {},
+      "overall_similarity": 57.53366458161733
+    },
+    "semantic_validation": {
+      "extracted_sections_validation": {
+        "count_match": true,
+        "generated_count": 5,
+        "expected_count": 5,
+        "document_coverage": {
+          "generated_documents": [
+            "Breakfast Ideas.pdf",
+            "Dinner Ideas - Mains_3.pdf",
+            "Dinner Ideas - Sides_1.pdf",
+            "Lunch Ideas.pdf",
+            "Dinner Ideas - Mains_2.pdf"
+          ],
+          "expected_documents": [
+            "Dinner Ideas - Sides_1.pdf",
+            "Dinner Ideas - Sides_3.pdf",
+            "Dinner Ideas - Sides_2.pdf",
+            "Lunch Ideas.pdf",
+            "Dinner Ideas - Mains_2.pdf"
+          ],
+          "missing_documents": [
+            "Dinner Ideas - Sides_3.pdf",
+            "Dinner Ideas - Sides_2.pdf"
+          ],
+          "extra_documents": [
+            "Breakfast Ideas.pdf",
+            "Dinner Ideas - Mains_3.pdf"
+          ],
+          "coverage_score": 60.0
+        },
+        "section_overlap": 0.0
+      },
+      "llm_response_validation": {
+        "found": false,
+        "message": "LLM response not found in expected locations"
+      },
+      "metadata_validation": {
+        "persona_match": true,
+        "task_match": true,
+        "document_count_match": true
+      },
+      "insights_validation": {}
+    },
+    "grade": "F - Poor"
+  }
+}

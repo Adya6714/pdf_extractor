@@ -1,0 +1,14 @@
+{
+  "collection_name": "travel_planner",
+  "persona": "Travel Planner",
+  "job_to_be_done": "Plan a trip of 4 days for a group of 10 college friends.",
+  "output_format": {
+    "include_json": true,
+    "include_pdf": true,
+    "pdf_title": "France Travel - Travel Planner"
+  },
+  "processing_config": {
+    "max_sections": 25,
+    "min_relevance_score": 0.5
+  }
+}
