@@ -9,6 +9,12 @@ This project processes collections of PDF documents, extracting and analyzing re
 ```bash
 docker build -t pdf-processor-1b .
 ```
+**OR Download Prebuilt Docker Image**
+   - [Download pdf-processor-1b.tar.gz](https://drive.google.com/file/d/14kM-yPaMNVjwIS-4-waujZV_-87zMjyU/view)
+   - Load the image:
+     ```bash
+     gunzip -c pdf-processor-1b.tar.gz | docker load
+     ```
 
 ### 2. Run the Pipeline (Batch Mode)
 ```bash
