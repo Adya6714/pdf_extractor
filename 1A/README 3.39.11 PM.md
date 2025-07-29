@@ -1,136 +1,172 @@
-# PDF Outline Extractor - Adobe India Hackathon 2025
+PDF Outline Extractor - Project 1A
 
-## Overview
+Overview
 
-This solution extracts structured outlines from PDF documents, identifying titles and hierarchical headings (H1, H2, H3) with their corresponding page numbers. The implementation uses advanced heuristics combining font size analysis, text patterns, and formatting characteristics to accurately detect document structure.
+This project implements an intelligent PDF outline extraction system that automatically identifies and extracts structured headings (H1, H2, H3) and document titles from PDF files. It works offline and is optimized for accuracy and versatility across various document types.
 
-## Approach
+Problem Statement
+	•	Accept PDF files (≤50 pages)
+	•	Extract document title
+	•	Identify H1–H3 headings with proper levels and page numbers
+	•	Output a structured JSON
+	•	Handle forms, reports, academic docs
+	•	Work without network dependency
 
-### 1. Text Extraction with Formatting
-- Uses PyMuPDF to extract text blocks with complete formatting information
-- Preserves font size, font name, bold/italic flags, and position data
-- Maintains page number associations for all text blocks
+Directory Structure
 
-### 2. Heading Detection Strategy
-The solution employs multiple techniques to identify headings:
+pdf_extractor/
+└── 1A/
+    ├── app/
+    │   ├── __init__.py
+    │   ├── extractor.py           # Core logic
+    │   └── process_pdfs.py        # Batch runner
+    ├── input/                    # PDF input files
+    ├── output/                   # Extracted JSON
+    ├── Dockerfile
+    └── README.md
 
-#### Pattern Recognition
-- Numbered sections (1., 1.1, 1.1.1)
-- Chapter/Section keywords
-- Roman numerals and lettered lists
+Architecture Diagram
 
-#### Font Analysis
-- Calculates document-wide font statistics (mean, median, mode)
-- Identifies text with font sizes significantly above average
-- Detects bold formatting and uppercase text
+┌────────────┐    ┌─────────────────┐    ┌────────────────┐
+│ Input PDFs │──▶│ PDF Extractor   │──▶│ JSON Outlines  │
+└────────────┘    │ extractor.py    │    │ output/*.json  │
+                 └─────────────────┘    └────────────────┘
+                            │
+                            ▼
+                   ┌────────────────────┐
+                   │ Processing Pipeline│
+                   ├────────────────────┤
+                   │ - Text & Font Info │
+                   │ - Header Filter    │
+                   │ - Merge Headings   │
+                   │ - Title Extract    │
+                   └────────────────────┘
 
-#### Text Characteristics
-- Length constraints (headings are typically shorter)
-- Lack of ending punctuation (except colons)
-- Position in document structure
+Pipeline Workflow
 
-### 3. Hierarchical Classification
-- **H1**: Major sections, largest font sizes, numbered chapters
-- **H2**: Subsections, medium font sizes, numbered subsections (x.x)
-- **H3**: Sub-subsections, smaller headings, numbered (x.x.x)
+1. Text & Formatting Extraction
+	•	Uses PyMuPDF to read block-level text and font metadata
+	•	Collects font size, bold status, coordinates
 
-### 4. Title Extraction
-- Checks PDF metadata first
-- Analyzes first 10 text blocks for largest, shortest text
-- Applies heuristics to identify most likely title
+2. Recurring Header/Footer Detection
+	•	Filters out repeated headers using first-line frequency analysis across pages
 
-## Technical Implementation
+3. Table Content Filtering
+	•	Skips repeated, dense font blocks indicative of table content
 
-### Libraries Used
-- **PyMuPDF (1.23.8)**: High-performance PDF parsing with low memory footprint
-  - Chosen for speed and accuracy in text extraction
-  - Provides detailed formatting information
-  - Supports complex PDF structures
+4. Font Analysis
+	•	Determines potential heading levels based on font size rarity
 
-### Key Features
-1. **Robust Pattern Matching**: Handles various numbering schemes and formats
-2. **Statistical Analysis**: Adapts to document-specific font usage
-3. **Multi-factor Scoring**: Combines multiple signals for accurate detection
-4. **Error Handling**: Gracefully handles corrupted or unusual PDFs
+5. Heading Classification
 
-## Performance Optimizations
+Scoring:
+	•	+5: Font size rarity
+	•	+4: Colon-style titles
+	•	+3: Numbered headings (e.g. 1.1. Title)
+	•	+2: Bold formatting
+	•	+2: All caps short strings
 
-1. **Efficient Memory Usage**
-   - Processes pages sequentially
-   - Releases resources immediately after use
-   - Minimal data structures in memory
+Threshold ≥4 qualifies as a heading
 
-2. **Speed Optimizations**
-   - Single-pass document analysis
-   - Pre-compiled regex patterns
-   - Optimized font statistics calculation
+6. Heading Merging
+	•	Merges visually adjacent heading fragments with matching format
 
-3. **Scalability**
-   - Handles documents up to 50 pages within 10-second limit
-   - Linear time complexity O(n) where n is number of text blocks
+7. Title Extraction
+	•	First-page font prominence analysis
+	•	Fallback to metadata
+	•	Fragment merging with duplicate-checking
 
-## Build and Run Instructions
+8. Output
+	•	JSON with keys: title, outline (list of headings with level, text, page)
 
-### Building the Docker Image
-```bash
-docker build --platform linux/amd64 -t pdf-processor:latest .
-```
+Special Document Handling
 
-### Running the Solution
-```bash
+Forms
+	•	If >95% font uniformity: classified as form → returns only title, no outline
+
+Reports/Articles
+	•	If font distribution is hierarchical and title is prominent → normal extraction
+
+Code Highlights
+
+extractor.py
+	•	PDFOutlineExtractor class with:
+	•	process_pdf() - main function
+	•	extract_title_with_merging()
+	•	merge_consecutive_headings()
+	•	is_potential_heading() with multi-criteria analysis
+	•	is_form_field_number() for form exclusion
+
+process_pdfs.py
+
+from pathlib import Path
+import json
+from extractor import PDFOutlineExtractor
+
+INPUT_DIR = Path("../input")
+OUTPUT_DIR = Path("../output")
+
+extractor = PDFOutlineExtractor()
+
+for pdf in INPUT_DIR.glob("*.pdf"):
+    result = extractor.process_pdf(pdf)
+    with open(OUTPUT_DIR / f"{pdf.stem}.json", "w") as f:
+        json.dump(result, f, indent=2)
+
+Local Execution
+
+cd pdf_extractor/1A
+pip install PyMuPDF pathlib
+mkdir -p input output
+cp my.pdf input/
+cd app
+python process_pdfs.py
+
+Docker Usage
+
+Build
+
+docker build --platform linux/amd64 -t pdf-extractor:latest .
+
+Run
+
 docker run --rm \
-  -v $(pwd)/input:/app/input:ro \
+  -v $(pwd)/input:/app/input \
   -v $(pwd)/output:/app/output \
   --network none \
-  pdf-processor:latest
-```
+  pdf-extractor:latest
 
-### Testing Locally
-1. Place PDF files in `./input` directory
-2. Run the Docker container
-3. Check `./output` directory for JSON files
+Configurable Parameters
+	•	heading_percentage_threshold = 5
+	•	max_heading_length = 200
+	•	min_heading_length = 3
+	•	form_detection_threshold = 95
 
-## Output Format
+Limitations
+	•	No OCR: does not process scanned image PDFs
+	•	Max 50 pages recommended for performance
+	•	Optimized for English documents
 
-```json
+Output Format
+
 {
-  "title": "Understanding AI",
+  "title": "Document Title",
   "outline": [
     { "level": "H1", "text": "Introduction", "page": 1 },
-    { "level": "H2", "text": "What is AI?", "page": 2 },
-    { "level": "H3", "text": "History of AI", "page": 3 }
+    { "level": "H2", "text": "Background", "page": 2 },
+    ...
   ]
 }
-```
 
-## Multilingual Support
+Troubleshooting
+	•	Missing headings → Ensure formatting is distinct
+	•	False positives → Tune scoring logic or debug via print statements
+	•	Title mismatch → Check merging and duplication checks
 
-The solution includes basic support for:
-- Unicode text extraction
-- Non-Latin scripts (tested with Japanese)
-- Mixed language documents
-- UTF-8 encoding throughout
+License
 
-## Edge Cases Handled
+[Add license here]
 
-1. **No Clear Headings**: Falls back to font-size based detection
-2. **Complex Layouts**: Handles multi-column PDFs
-3. **Missing Metadata**: Extracts title from document content
-4. **Unusual Formatting**: Adapts to document-specific patterns
-5. **Large Documents**: Optimized for 50-page processing
+Contributors
 
-## Future Improvements
-
-1. Machine learning-based heading detection
-2. Support for more heading patterns (e.g., lettered sections)
-3. Table of contents analysis for validation
-4. Enhanced multilingual support with language-specific rules
-
-## Compliance
-
-- ✅ Execution time: < 10 seconds for 50-page PDFs
-- ✅ No external dependencies or network calls
-- ✅ Model size: < 200MB (no ML models used)
-- ✅ CPU-only implementation (AMD64 compatible)
-- ✅ Offline operation
-- ✅ Open-source libraries only
+Maintained by internal team. Contributions welcome with PR and test PDFs.
