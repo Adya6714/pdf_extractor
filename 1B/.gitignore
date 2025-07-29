@@ -1,18 +1,9 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-*.log
-
-# Virtual environments
+__pycache__
+*.pyc
 venv/
-.venv/
-1B/venv/
-
-# Large files & misc
-*.safetensors
-*.pt
-*.pdf
-*.json
+.git/
+models/*.gguf
 outputs/
-1B/models/
+cache/
+logs/
+1B/models/*.gguf
